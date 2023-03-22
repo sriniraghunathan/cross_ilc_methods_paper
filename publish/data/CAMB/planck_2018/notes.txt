@@ -1,0 +1,1 @@
+#Table 2 of https://arxiv.org/pdf/1807.06209.pdf. Penultimate column: TT,TE,EE+lowE+lensing
