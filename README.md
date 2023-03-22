@@ -15,5 +15,5 @@
 
 ## [Data products](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/data):
 * [cmb_cl_planck_2015_lensedCls.dat](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/cmb_cl_planck_2015_lensedCls.dat): {\it Planck} 2015 CMB power spectra.
-* [lagache_2019_ns150_radio.dat](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/lagache_2019_ns150_radio.dat): Radio \$dN/dS$ = Lagache et al. 2020 model ([arXiv: 1911.09466])(https://arxiv.org/abs/1911.09466) used to model radio point source power.
+* [lagache_2019_ns150_radio.dat](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/lagache_2019_ns150_radio.dat): Radio \$dN/dS$ = Lagache et al. 2020 model [(arXiv: 1911.09466)](https://arxiv.org/abs/1911.09466) used to model radio point source power.
 * [ilc_weights_residuals_agora_fg_model.npy](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/ilc_weights_residuals_agora_fg_model.npy): ILC residuals for multiple ILC combinations and all experiments considered in this work.
