@@ -10,20 +10,29 @@ h, k, c, temp=6.62607e-34, 1.38065e-23, 2.9979e8, 2.725
 
 ################################################################
 ################################################################
-def Jy_Sr_K(nu, Jy_K = 1, K_Jy = 0):
+def Jy_Sr_K(band, Jy_K = True, K_Jy = False):
     """
     Conversion from Jy/Sr to Kelvin and vice versa.
 
-    Inputs:
-    nu: freqeuncy in GHz.
-    Jy_K: Default is True. Convert from flux to temperature.
-    k_Jy: Convert from temperature to flux.
-    """
-    nu *= 1e9
+    Parameters
+    ----------
+    band: float
+        freqeuncy in GHz.
+    Jy_K: bool
+        Default is True. Convert from flux to temperature.
+    k_Jy: bool
+        Default is False. Convert from temperature to flux.
 
-    x=h*nu/(k*temp)
+    Returns
+    -------
+    conv: float
+        conversion factor from Jy/Sr or vice versa.
+    """
+    band *= 1e9
+
+    x=h*band/(k*temp)
     
-    dbnu = 2.*k*(nu**2/c**2)*(x**2*np.exp(x))/(np.exp(x)-1.)**2.0
+    dbnu = 2.*k*(band**2/c**2)*(x**2*np.exp(x))/(np.exp(x)-1.)**2.0
     conv=1e26*dbnu #Jy to K
 
     if Jy_K:
@@ -31,7 +40,28 @@ def Jy_Sr_K(nu, Jy_K = 1, K_Jy = 0):
     else:
         return conv
 
-def interpolate_dn_ds(s, dnds, increasing_spacing_by = 20):
+def interpolate_dn_ds(s, dnds, increasing_spacing_by = 10):
+    """
+    interpolate dN/ds to increase the resolution.
+    This is particularly important for high flux (S150>=2 mJy) sources.
+
+    Parameters
+    ----------
+    s: array
+        flux bins.
+    dnds: array
+        source count in each flux bin.
+    increasing_spacing_by: int
+        interploation factor. Default is x10.
+    
+    Returns
+    -------
+    s_ip: array
+        interpolated flux bins.
+    dnds_ip: array
+        interpolated source counts in each flux bin.
+    """
+
     lns = np.log(s)
     dlns =  (lns[1]-lns[0])
 
@@ -43,8 +73,42 @@ def interpolate_dn_ds(s, dnds, increasing_spacing_by = 20):
         
     return s_ip, dnds_ip
 
-def get_poisson_source_counts(band, min_flux_mJy = -1., max_flux_mJy = 6.4e-3, band0 = 150., which_dnds = 'dezotti', spec_index_radio = -0.76, dnds_ip_factor = 10):
+def get_poisson_source_counts(band, min_flux_mJy = -1., max_flux_mJy = 6.4e-3, band0 = 150., which_dnds = 'lagache', spec_index_radio = -0.76, dnds_ip_factor = 10):
 
+    """
+    get radio source population dN/ds for the desired band.
+
+    Parameters
+    ----------
+    band: float
+        freqeuncy in GHz.
+    min_flux_mJy: float
+        min. flux required in mJy.
+        default is -1 --> no minimum threshold.
+    max_flux_mJy: float
+        min. flux required in mJy.
+    band0: float
+        default band in which the source count file is defined.
+        default is 150 GHz. Does not work for others.
+    which_dnds: str
+        dn/ds model to be used.
+        default in lagache.
+        options are lagache and dezotti.
+    spec_index_radio: float
+        radio spectral index to be used to scale from band0 to other bands.
+        default is -0.7 (R21 SPT result).
+    dnds_ip_factor: int
+        interploation factor for dN/ds. Default is x10.
+    
+    Returns
+    -------
+    s: array
+        flux array.
+    nsources: array
+        total source in each flux bin.
+    dndlns: array
+        logrithminc source counts in each flux bin.
+    """
     if which_dnds == 'dezotti':
         assert band0 == 150
         de_zotti_number_counts_file = 'publish/data/counts_150GHz_de_Zotti_radio.res'
