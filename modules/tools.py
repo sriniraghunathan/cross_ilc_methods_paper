@@ -166,13 +166,13 @@ def get_poisson_power_with_spectra_index_scatter(band1, band2 = None, min_flux_m
 
     return cl_poisson
 
-def get_radio_ilc_residuals(els, freqarr, wl1, wl2, which_dnds_arr, min_flux_mJy=0.1e-3, max_flux_mJy=4e-3, spec_index_radio = -0.76, spec_index_radio_scatter_arr = [0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.01], dnds_ip_factor = 10):
+def get_radio_ilc_residuals(els, freqarr, wl1, wl2, which_dnds_arr, min_flux_mJy=0.1e-3, max_flux_mJy=4e-3, spec_index_radio = -0.76, spec_index_radio_scatter_arr = [0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.01], dnds_ip_factor = 10, quiet = False):
     radio_cl_dic = {}
     for which_dnds in which_dnds_arr:
-        print('\tdN/ds = %s' %(which_dnds))
+        if not quiet: print('\tdN/ds = %s' %(which_dnds))
         radio_cl_dic[which_dnds] = {}
         for spec_index_radio_scatter in spec_index_radio_scatter_arr:
-            print('\t\talpha = %s; scatter = %s' %(spec_index_radio, spec_index_radio_scatter))
+            if not quiet: print('\t\talpha = %.3f; scatter = %.3f' %(spec_index_radio, spec_index_radio_scatter))
             radio_cl_dic[which_dnds][spec_index_radio_scatter]={}
             radio_cl_dic[which_dnds][spec_index_radio_scatter]['cl_dic'] = {}
             for freq1 in freqarr:

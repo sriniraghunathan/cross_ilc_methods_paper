@@ -248,3 +248,33 @@ def get_fisher_matrix(els, cl_deriv_dic, delta_cl_dic, params, pspectra_to_use, 
 
     return F   
 
+def get_fisher_inv(F_mat):
+
+    F_mat = np.asarray(F_mat)
+
+    Flen = len(F_mat)
+    all_inds = np.arange(Flen)
+
+    F_mat_diag = np.diag(F_mat)
+    good_inds = np.where(F_mat_diag > 0)[0]
+    Flen_refined = len(good_inds)
+
+    #from IPython import embed; embed(); sys.exit()
+
+    F_mat_refined = []
+    used_i, used_j = [], []
+    for i in all_inds:
+        for j in all_inds:
+            if i in good_inds and j in good_inds: 
+                F_mat_refined.append( (F_mat[j, i]) )
+                used_i.append(i)
+                used_j.append(j)
+    used_i = np.asarray(used_i)
+    used_j = np.asarray(used_j)
+    F_mat_refined = np.asarray( F_mat_refined ).reshape( (Flen_refined, Flen_refined) )
+    C_mat_refined = np.linalg.inv(F_mat_refined)
+
+    C_mat = np.zeros(F_mat.shape)
+    C_mat[used_j, used_i] = C_mat_refined.flatten()
+
+    return C_mat
