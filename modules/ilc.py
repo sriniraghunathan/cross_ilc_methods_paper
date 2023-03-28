@@ -99,7 +99,44 @@ def create_covariance(bands, elcnt, cl_dict):
 
     return cov
 
-def get_frequency_response(bands, final_comp = 'cmb', spec_index_rg = -0.76, freqcalib_fac = None, nspecs = 1, experiment = None):
+def get_frequency_response(bands, final_comp = 'cmb', spec_index_rg = -0.76, freqcalib_fac = None, nspecs = 1):
+
+    """
+    get frequency dependence of a sky signal.
+
+    Parameters
+    ----------
+    bands : array
+        array of frequency bands for which we need the covariance.
+
+    component : str
+        It can be
+        'cmb' for CMB spectra
+        'tsz' or 'y' for thermal SZ
+        'radio' for radio galaxies (see get_radio_freq_dep() function)
+        'cib' or 'cibpo' for Poisson component of the CIB.
+        'cibclus' for clustered component of the CIB.
+        'misc_cib_tcibxx_betayy' for misc CIB with T_d=xx and beta=yy.
+
+    spec_index_rg: float
+        Spectral index to be used for radio.
+        Default is -0.76 (R21 value).
+
+    freq_cal : array
+        array containing calibration factors / mis-matches between different bands.
+        default is None which is equivalent to [1, 1, 1, ... 1] in all bands.
+
+    nspecs : int
+        tells if we are performing ILC for T alone or T/E/B together.
+        default is 1. For only one map component.
+
+    Returns
+    -------
+    avec : array
+        freq. dependene of the respective sky component.
+        for example: CMB will be  [1., 1., ...., 1.] in all bands.
+    """
+
 
     nc = len(bands)
 
@@ -181,6 +218,44 @@ def get_frequency_response(bands, final_comp = 'cmb', spec_index_rg = -0.76, fre
 
 def get_mvilc_residual_and_weights(bands, el, cl_dict, final_comp = 'cmb', freqcalib_fac = None, lmin = 10):
 
+    """
+    get MV ILC residuals and weights
+
+    Parameters
+    ----------
+    bands: array
+        array of frequency bands for which we need the covariance.
+
+    el: array
+        Multipoles over which cl_dict is defined.
+
+    cl_dict : dict
+        dictionary containing signal auto- and cross- spectra of different freq. bands.
+
+    final_comp: str
+        It can be
+        'cmb' for CMB spectra
+        'tsz' or 'y' for thermal SZ
+        'radio' for radio galaxies (see get_radio_freq_dep() function)
+        'cib' or 'cibpo' for Poisson component of the CIB.
+        'cibclus' for clustered component of the CIB.
+        'misc_cib_tcibxx_betayy' for misc CIB with T_d=xx and beta=yy.
+
+    freqcalib_fac : array
+        array containing calibration factors / mis-matches between different bands.
+        default is None which is equivalent to [1, 1, 1, ... 1] in all bands.
+
+    lmin : int
+        Minimum multipole to be used.
+        Default is 10.
+
+    Returns
+    -------
+    avec : array
+        freq. dependene of the respective sky component.
+        for example: CMB will be  [1., 1., ...., 1.] in all bands.
+    """
+
     nspecs, specs = get_teb_spec_combination(cl_dict)
     acap = get_frequency_response(bands, final_comp = final_comp, freqcalib_fac = freqcalib_fac, nspecs = nspecs)
 
@@ -222,6 +297,42 @@ def get_mvilc_residual_and_weights(bands, el, cl_dict, final_comp = 'cmb', freqc
     return cl_residual, weightsarr
 
 def get_ilc_residual_using_weights(cl_dic, wl, bands, wl2 = None, lmax = 10000, el = None):
+
+    """
+    get ILC residuals for a given compnent given the freqeuency dependent weights.
+    If wl2 is None, then this function returns the auto-ILC residuals.
+
+    Parameters
+    ----------
+    cl_dict : dict
+        dictionary containing signal auto- and cross- spectra of the component in 
+        different freq. bands.
+
+    wl: array
+        freqeuency dependent weights.
+
+    bands: array
+        array of frequency bands.
+
+    wl2: array
+        same as wl but for a different ILC.
+        Default is None.
+
+    lmax: int
+        Maximum multipole for computation.
+        Default is 10000.
+
+    el: array
+        Multipole array. 
+        Default is None.
+
+    Returns
+    -------
+    avec : array
+        freq. dependene of the respective sky component.
+        for example: CMB will be  [1., 1., ...., 1.] in all bands.
+    """
+
     if wl2 is None:
         wl2 = wl
     if el is None:
