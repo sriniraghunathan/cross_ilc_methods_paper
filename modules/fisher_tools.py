@@ -13,6 +13,13 @@ def get_cl_ksz(els, Aksz = 1., dl_ksz_amp_total = 3.):
     cl_ksz[np.isinf(cl_ksz)] = 0.
     return Aksz * cl_ksz
 
+def get_homo_ksz(els, Aksz_h = 1., alphaksz_h = 0., el_norm = 3000):
+    dl_fac = els * (els+1)/2/np.pi
+    dl_ksz_homo = Aksz_h * (els/el_norm)**alphaksz_h
+    cl_ksz_homo = dl_ksz_homo/dl_fac
+
+    return cl_ksz_homo
+
 def get_knox_errors_parent(els, cl_dic, nl11_dic, fsky, nl22_dic = None, nl12_dic = None):
 
     delta_cl_dic = {}

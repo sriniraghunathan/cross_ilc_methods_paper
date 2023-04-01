@@ -23,6 +23,13 @@ Aphiphi = 1.
 mnu= 0.06
 num_nu_massive = 1
 
+#ksz
+Aksz = 1.
+Aksz_h = 1.
+alphaksz_h = 0.
+zmid = 7.69 ##8.
+zdur = 4.
+
 #pivots
 pivot_scalar = 0.05
 pivot_tensor = 0.05

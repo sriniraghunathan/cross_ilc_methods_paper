@@ -20,6 +20,9 @@ def get_latex_param_str(param, use_H = False):
     'A_phi_sys': r'$A_{\phi}^{\rm sys}$', 'alpha_phi_sys': r'$\alpha_{\phi}^{\rm sys}$', \
     'alpha_radio': r'$\alpha_{\rm rad}$', 'alpha_radio_sigma': r'$\sigma(\alpha_{\rm rad})$', \
     'Aksz': r'$A_{\rm kSZ}$', \
+    'Aksz_h': r'$A_{\rm kSZ}^{h}$', 'alphaksz_h': r'$\alpha_{\rm kSZ}^{h}$', \
+    'zmid': r'$z_{\rm re}^{\rm mid}$', 'zdur': r'$\Delta z_{\rm re}$', \
+    'Acibtsz': r'$A_{\rm CIB+tSZ}$', \
     }
 
     if use_H:
@@ -99,7 +102,9 @@ def get_Gaussian(mean, sigma, minx, maxx, delx):
     return x, np.exp( -(x - mean)**2. / (2 * sigma**2.)  )
 
 #def make_triangle_plot(exparr, F_dic, param_dict, tr, tc, param_names, desired_params_to_plot, fix_params, color_dic, ls_dic = None, one_or_two_sigma = 1, fsval = 12, use_percent = False, use_H = False, fix_axis_range_to_xxsigma = 4., lwval = 1.5, upper_or_lower_triangle = 'lower', write_titles = True, show_diagonal = True, legloc = 4):
-def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to_plot, color_dic, ls_dic = None, one_or_two_sigma = 1, fsval = 12, use_percent = False, use_H = False, fix_axis_range_to_xxsigma = 5., lwval = 1., upper_or_lower_triangle = 'lower', write_titles = True, show_diagonal = True, legloc = 4, prior_dic = {}):
+def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to_plot, color_dic, ls_dic = None, one_or_two_sigma = 1, fsval = 12, use_percent = False, use_H = False, fix_axis_range_to_xxsigma = 4., lwval = 1., upper_or_lower_triangle = 'lower', write_titles = True, show_diagonal = True, legloc = 4, prior_dic = {}):
+
+    ##print(param_names, desired_params_to_plot); sys.exit()
 
     #cosmo_param_pl_chars_dict, param_names_to_plot = get_cosmo_param_pl_chars_dict(param_names, fix_params, desired_params_to_plot, use_H)
     cosmo_param_pl_chars_dict, param_names_to_plot = get_cosmo_param_pl_chars_dict(param_names, desired_params_to_plot, use_H)
@@ -130,7 +135,7 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
             '''
             x = param_dict[p1]
             y = param_dict[p2]
-            deltax, deltay = x, y
+            deltax, deltay = 5*x, 5*y
 
             #deltax, deltay = x/10., y/10. #rough plotting limits
             epsilon_x, epsilon_y = abs(x/10000.), abs(y/10000.) #for Gaussian 1d curve.
@@ -230,6 +235,7 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
 
                         #print(p1, cov_extract[0,0]**0.5)
                         widthval = cov_extract[0,0]**0.5##/2.35
+                        ###print(widthval, p1, cov_extract, cov_inds_to_extract); sys.exit()
                         #print(widthval, p1); sys.exit()
                         if use_H and p1 =='h0': 
                             widthval*=100.
@@ -238,9 +244,18 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
                         #print(x, x1, x2, epsilon_x); sys.exit()
                         if p1 == 'thetastar':
                             epsilon_x = epsilon_x / 10.
-                        hor, ver = get_Gaussian(x, widthval, x1, x2, epsilon_x)
+                        if x==0:
+                            epsilon_x = 0.001
+                        if widthval/epsilon_x<100.:
+                            epsilon_x = epsilon_x / 10.
                         if x2<x1:
                             hor, ver = get_Gaussian(x, widthval, x2, x1, epsilon_x)
+                        elif x1==x2:
+                            x1=x-10.
+                            x2=x+10.
+                            hor, ver = get_Gaussian(x, widthval, x1, x2, epsilon_x)
+                        else:
+                            hor, ver = get_Gaussian(x, widthval, x1, x2, epsilon_x)
                         #labval = r'%.4f' %(widthval)
                         if use_percent:
                             labval = r'%.2f\%%' %(100. * abs(widthval/x))
@@ -254,7 +269,7 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
                             hor, ver = get_Gaussian(x, widthval, x1, x2, epsilon_x)
                             if x2<x1:
                                 hor, ver = get_Gaussian(x, widthval, x2, x1, epsilon_x)
-                            plot(hor, ver, color = 'black', ls = '--', lw = 2., label = r'Prior')
+                            plot(hor, ver, color = 'black', ls = '--', lw = 2.)#, label = r'Prior')
 
 
                         plot(hor, ver, color = colorarr[ss], ls = lsarr[ss], lw = lwval, label = labval)
@@ -269,6 +284,7 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
                         legend(loc = legloc, framealpha = 1, fontsize = legfsval-2, edgecolor = 'None', handletextpad=handletextpad, handlelength = handlelength, numpoints = 1, columnspacing = 1, labelspacing = 0.4)#, ncol = 2)#, handlelength = 2.)
 
                         #print(x1, x2, p1)
+                        if p1 =='Aksz': print(exp, p1, widthval, x/widthval)
                         xlim(x1, x2)
                         ylim(0., 1.)
                         setp(ax.get_yticklabels(), visible=False); tick_params(axis='y',left='off')
@@ -364,6 +380,7 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
                 y = param_dict[p2]
                 x1, x2 = x - deltax*fix_axis_range_to_xxsigma, x + deltax*fix_axis_range_to_xxsigma
                 y1, y2 = y - deltay*fix_axis_range_to_xxsigma, y + deltay*fix_axis_range_to_xxsigma
+                ##if p1 == p2: print(widthvalues_for_axis_limits[p1], x, x1, x2)
                 ax = subplot(tr, tc, sbpl)#, aspect = 'equal')
                 #print(deltax, deltay, p1, p2)
                 xlim(x1, x2)
