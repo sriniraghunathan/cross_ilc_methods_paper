@@ -76,13 +76,13 @@ def get_knox_errors(els, cl11, fsky, cl22 = None, cl12 = None):
     return cl_knox_err
 
 
-def fix_params(F_mat, param_names, fix_params):
+def fix_params(F_mat, param_names, fix_params_arr):
 
     #remove parameters that must be fixed    
     F_mat_refined = []
     for pcntr1, p1 in enumerate( param_names ):
         for pcntr2, p2 in enumerate( param_names ):
-            if p1 in fix_params or p2 in fix_params: continue
+            if p1 in fix_params_arr or p2 in fix_params_arr: continue
             F_mat_refined.append( (F_mat[pcntr2, pcntr1]) )
 
     totparamsafterfixing = int( np.sqrt( len(F_mat_refined) ) )
@@ -90,8 +90,10 @@ def fix_params(F_mat, param_names, fix_params):
 
     param_names_refined = []
     for p in param_names:
-        if p in fix_params: continue
+        if p in fix_params_arr: continue
         param_names_refined.append(p)
+
+    param_names_refined = np.asarray(param_names_refined)
 
 
     return F_mat_refined, param_names_refined
@@ -285,3 +287,24 @@ def get_fisher_inv(F_mat):
     C_mat[used_j, used_i] = C_mat_refined.flatten()
 
     return C_mat
+
+def get_sigma_of_a_parameter(F_mat, param_names, desired_param, prior_dic = None, fix_params_arr = None):
+
+    param_names = np.asarray( param_names )
+    fix_params_arr = np.asarray( fix_params_arr )
+
+    if prior_dic is not None: #add priors.
+        F_mat = add_priors(F_mat, param_names, prior_dic)
+
+    if fix_params_arr is not None:
+        F_mat, param_names = fix_params(F_mat, param_names, fix_params_arr)
+
+    cov_mat = get_fisher_inv(F_mat)
+    param_names = np.asarray( param_names )
+    pind = np.where(param_names == desired_param)[0][0]
+    pcntr1, pcntr2 = pind, pind
+    cov_inds_to_extract = [(pcntr1, pcntr1), (pcntr1, pcntr2), (pcntr2, pcntr1), (pcntr2, pcntr2)]
+    cov_extract = np.asarray( [cov_mat[ii] for ii in cov_inds_to_extract] ).reshape((2,2))
+    sigma_val = cov_extract[0,0]**0.5
+
+    return sigma_val
