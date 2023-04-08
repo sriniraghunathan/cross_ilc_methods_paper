@@ -108,6 +108,19 @@ def add_priors(F_mat, param_names, prior_dic):
 
     return F_mat
 
+def get_cov(TT, EE, TE, PP = 0., TP = 0., EP = 0.):
+
+    C = np.zeros( (3,3) ) #TT, EE, PP
+    C[0,0] = TT
+    C[1,1] = EE
+    C[0,1] = C[1,0] = TE
+
+    C[2,2] = PP
+    C[0,2] = C[2,0] = TP
+    C[1,2] = C[2,1] = EP ##0. ##EP
+
+    return np.mat( C )
+
 def get_fisher_matrix(els, cl_deriv_dic, delta_cl_dic, params, pspectra_to_use, min_l_temp = None, max_l_temp = None, min_l_pol = None, max_l_pol = None):
 
     if min_l_temp is None: min_l_temp = 0
