@@ -18,8 +18,10 @@
 * [ilc_weights_residuals_agora_fg_model.npy](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/ilc/ilc_weights_residuals_agora_fg_model.npy): ILC residuals for multiple ILC combinations and all experiments considered in this work.
 * [cmb_cl_planck_2015_lensedCls.dat](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/cmb_cl_planck_2015_lensedCls.dat): \${\it Planck}$ 2015 CMB power spectra.
 * [CAMB](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/data/CAMB): CMB power spectra and derivatives of the power spectra as a function of cosmological parameters:
+  * Both [Planck 2018](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/CAMB/planck_2018/) and [Planck 2015](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/CAMB/planck_2015/) are available.
+   * [Planck 2018](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/CAMB/planck_2018/) is the default.
   * These are used for [Fisher](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/perform_ksz_fisher.ipynb) forecasting.
-  * Both [lensed](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/CAMB/cmb_spectra_lensed.txt) and [unlensed](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/CAMB/cmb_spectra_unlensed.txt) versions are available.
+  * Both [lensed](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/CAMB/planck_2018/cmb_spectra_lensed.txt) and [unlensed](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/CAMB/planck_2018/cmb_spectra_unlensed.txt) versions are available.
   * Fiducial: Lensed spectra.
 
 ## Dependencies:
