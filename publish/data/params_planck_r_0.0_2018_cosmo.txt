@@ -35,12 +35,12 @@ pivot_scalar = 0.05
 pivot_tensor = 0.05
 
 # CAMB files
-lens_potential_accuracy=1 #1 - self.set_nonlinear_lensing(True)
+lens_potential_accuracy=0 ##1 #1 - self.set_nonlinear_lensing(True)
 min_l_limit=2
-max_l_limit= 7000 ##3000 ##5000 ##2502
-max_l_tensor = 600 ##1500
-max_eta_k = 50000 ###25000.0
-max_eta_k_tensor = 12000 #3000.0
+max_l_limit= 7000 #7000 ##3000 ##5000 ##2502
+max_l_tensor = 7000
+max_eta_k = 25000 #50000 ###25000.0
+max_eta_k_tensor = 7000 #12000 #3000.0
  
 
 #experiment
@@ -51,16 +51,16 @@ max_eta_k_tensor = 12000 #3000.0
 
 #Increase accuracy_boost to decrease time steps, use more k values,  etc.
 #Decrease to speed up at cost of worse accuracy. Suggest 0.8 to 3.
-AccuracyBoost          = 2 ##2 ##3
+AccuracyBoost          = 1 ##2 ##2 ##3
 
 #Larger to keep more terms in the hierarchy evolution. 
-lAccuracyBoost        = 2 ## ##3
+lAccuracyBoost        = 1 ##2 ## ##3
 
 #Increase to use more C_l values for interpolation.
 #Increasing a bit will improve the polarization accuracy at l up to 200 -
 #interpolation errors may be up to 3%
 #Decrease to speed up non-flat models a bit
-lSampleBoost          = 2 ##1 ##2
+lSampleBoost          = 1 ##2 ##1 ##2
 
 #Whether you are bothered about polarization. 
 accurate_polarization   = 1

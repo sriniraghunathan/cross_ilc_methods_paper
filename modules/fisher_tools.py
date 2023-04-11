@@ -4,6 +4,7 @@ from scipy.io import readsav
 from scipy import interpolate as intrp
 import scipy as sc
 from scipy import integrate, stats
+from pylab import *
 
 def get_cl_ksz(els, Aksz = 1., dl_ksz_amp_total = 3.):
     dl_fac = els * (els+1)/2/np.pi
@@ -303,21 +304,124 @@ def get_fisher_inv(F_mat):
 
 def get_sigma_of_a_parameter(F_mat, param_names, desired_param, prior_dic = None, fix_params_arr = None):
 
-    param_names = np.asarray( param_names )
+    F_mat_mod = np.copy(F_mat)
+    param_names_mod = np.copy(param_names)
+
+    param_names_mod = np.asarray( param_names_mod )
     fix_params_arr = np.asarray( fix_params_arr )
 
     if prior_dic is not None: #add priors.
-        F_mat = add_priors(F_mat, param_names, prior_dic)
+        F_mat_mod = add_priors(F_mat_mod, param_names_mod, prior_dic)
 
     if fix_params_arr is not None:
-        F_mat, param_names = fix_params(F_mat, param_names, fix_params_arr)
+        F_mat_mod, param_names_mod = fix_params(F_mat_mod, param_names_mod, fix_params_arr)
 
-    cov_mat = get_fisher_inv(F_mat)
-    param_names = np.asarray( param_names )
-    pind = np.where(param_names == desired_param)[0][0]
+    cov_mat = get_fisher_inv(F_mat_mod)
+    
+    param_names_mod = np.asarray( param_names_mod )
+    pind = np.where(param_names_mod == desired_param)[0][0]
     pcntr1, pcntr2 = pind, pind
     cov_inds_to_extract = [(pcntr1, pcntr1), (pcntr1, pcntr2), (pcntr2, pcntr1), (pcntr2, pcntr2)]
     cov_extract = np.asarray( [cov_mat[ii] for ii in cov_inds_to_extract] ).reshape((2,2))
     sigma_val = cov_extract[0,0]**0.5
 
     return sigma_val
+
+def get_bias_vector(els, F_mat, param_names, delta_cl_dic, cl_deriv_dic, cl_sys_dic, max_l = 5000, pspectra_to_use = ['TT', 'EE', 'TE']):
+    null_TT, null_EE, null_TE = 0, 0, 0
+    bias_vector = []
+    for pcntr, p in enumerate( param_names ):
+        curr_bias_vector = []
+        for l in range(max_l):
+            TT, EE, TE = delta_cl_dic['TT'][l], delta_cl_dic['EE'][l], delta_cl_dic['TE'][l]
+            TT_der, EE_der, TE_der = cl_deriv_dic[p]['TT'][l], cl_deriv_dic[p]['EE'][l], cl_deriv_dic[p]['TE'][l]
+            TT_sys, EE_sys, TE_sys = cl_sys_dic['TT'][l], cl_sys_dic['EE'][l], cl_sys_dic['TE'][l]
+
+            if 'TT' not in pspectra_to_use:
+                null_TT = 1
+            if 'EE' not in pspectra_to_use:
+                null_EE = 1
+            if 'TE' not in pspectra_to_use:
+                if 'TT' in pspectra_to_use and 'EE' in pspectra_to_use:
+                    null_TE = 0
+                else:
+                    null_TE = 1
+            if ['TT', 'EE', 'TE'] in pspectra_to_use:
+                null_TT = 0
+                null_EE = 0
+                null_TE = 0
+
+            #nulling unwanted fields
+            if null_TT and null_TE: 
+                TT = TT_der = TT_sys = 0
+            if null_EE and null_TE: 
+                EE = EE_der = EE_sys = 0
+            if null_TE: 
+                if not null_TT and not null_EE:
+                    pass
+                else:
+                    TE = TE_der = TE_sys = 0
+            #nulling unwanted fields
+
+
+            curr_fisher_cov = get_cov(TT, EE, TE)
+            inv_curr_fisher_cov = get_fisher_inv(curr_fisher_cov)
+
+            sysres_vec = get_cov(TT_sys, EE_sys, TE_sys)
+            der_vec = get_cov(TT_der, EE_der, TE_der)
+            curr_bias_val_with_trace = np.trace( np.dot( np.dot(inv_curr_fisher_cov, sysres_vec), np.dot(inv_curr_fisher_cov, der_vec) ) )
+            ##print(curr_bias_val_with_trace); sys.exit()
+
+            curr_bias_vector.append( curr_bias_val_with_trace )
+        bias_vector.append( np.sum(curr_bias_vector) )
+        ##print('\t\t%s, %s' %(p, bias_vector[pcntr]))
+        
+    bias_vector = np.asarray(bias_vector)
+    C_mat = np.linalg.inv(F_mat)
+    final_bias_vector = np.asarray( np.dot( np.mat(bias_vector), C_mat ) )[0]
+    
+    return final_bias_vector
+
+def simple_fisher_bias_check_introduce_sys_by_changing_cosmo_params(sys_bias_param_name, sys_bias_param_shift, raw_cl = True, sys_bias_spectra_arr_to_be_shifted = ['TT', 'EE', 'TE'], which_spectra = 'lensed_scalar', debug = False):
+
+    import tools_for_plotting
+    import camb
+    
+    parent_cl_dic = {}
+    for iter in range(2):
+
+        param_dict = tools_for_plotting.get_ini_param_dict()
+        if iter == 1:
+            param_dict[sys_bias_param_name] = sys_bias_param_shift
+
+        pars = camb.CAMBparams(max_l_tensor = param_dict['max_l_tensor'], max_eta_k_tensor = param_dict['max_eta_k_tensor'])
+        pars.set_for_lmax(param_dict['max_l_limit'], lens_potential_accuracy=param_dict['lens_potential_accuracy'])
+        pars.set_accuracy(AccuracyBoost = param_dict['AccuracyBoost'], lAccuracyBoost = param_dict['lAccuracyBoost'], lSampleBoost = param_dict['lSampleBoost'],\
+            DoLateRadTruncation = param_dict['do_late_rad_truncation'])
+        pars.set_cosmology(thetastar=param_dict['thetastar'], ombh2=param_dict['ombh2'], omch2=param_dict['omch2'], nnu = param_dict['neff'], mnu=param_dict['mnu'], \
+            omk=param_dict['omk'], tau=param_dict['tau'], YHe = param_dict['YHe'], Alens = param_dict['Alens'], \
+            num_massive_neutrinos = param_dict['num_nu_massive']) 
+
+        results = camb.get_results(pars)
+        powers = results.get_cmb_power_spectra(pars, raw_cl = raw_cl, lmax = param_dict['max_l_limit'])#, spectra = [which_spectra])#, CMB_unit=None, raw_cl=False)
+        cl_tt, cl_ee, cl_te, cl_bb = powers[which_spectra].T * 1e12
+        els = np.arange( len(cl_tt) )
+        cl_dic={}
+        cl_dic['TT'], cl_dic['EE'], cl_dic['TE'], cl_dic['BB'] = cl_tt, cl_ee, cl_te, cl_bb
+        parent_cl_dic[iter] = cl_dic
+
+    cl_sys_shift_dic = {}
+    for sys_bias_spectra_to_be_shifted in sys_bias_spectra_arr_to_be_shifted:
+        cl_sys_shift = parent_cl_dic[1][sys_bias_spectra_to_be_shifted] - parent_cl_dic[0][sys_bias_spectra_to_be_shifted]
+        cl_sys_shift_dic[sys_bias_spectra_to_be_shifted] = cl_sys_shift
+    if debug:
+        color_arr = ['navy', 'red']
+        for iter in range(2):
+            dl_fac = els * (els+1)
+            ax = subplot(111, yscale = 'log')
+            plot(els, dl_fac * parent_cl_dic[iter][sys_bias_spectra_to_be_shifted], color = color_arr[iter])
+        plot(els, dl_fac * cl_sys_shift, color = 'black')
+        plot(els, dl_fac * -cl_sys_shift, color = 'black', ls= '-.')
+        show(); sys.exit()
+
+    return els, cl_sys_shift_dic

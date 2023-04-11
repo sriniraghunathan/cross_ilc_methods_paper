@@ -112,10 +112,13 @@ def get_sbpl_locs_dic(param_names_to_plot, cosmo_param_pl_chars_dict, offset = 0
 
     return sbpl_locs_dic
 
-def show_two_parameter_plot(exparr, F_dic, param_dict, param_names, desired_params_to_plot, color_dic, ls_dic = None, one_or_two_sigma = 1, fsval = 12, fix_axis_range_to_xxsigma = 4., lwval = 1.5, legloc = 2, prior_dic = {}, prior_name = None):
+def show_two_parameter_plot(ax_ip, exparr, F_dic, param_dict, param_names, desired_params_to_plot, color_dic, ls_dic = None, one_or_two_sigma = 1, fsval = 12, fix_axis_range_to_xxsigma = 4., lwval = 1.5, legloc = 2, prior_dic = {}, prior_name = None, prior_spec_dict = None, add_legend = False):
 
-    clf()
-    figure(figsize=(5.5, 4.3))
+    if prior_spec_dict is None:
+        prior_spec_dict = {}
+        prior_spec_dict['colorval'] = 'lightsteelblue'
+        prior_spec_dict['alphaval'] = 0.2
+
     assert len(desired_params_to_plot) == 2
     param_names = np.asarray(param_names)
     p1, p2 = desired_params_to_plot
@@ -126,7 +129,7 @@ def show_two_parameter_plot(exparr, F_dic, param_dict, param_names, desired_para
     x = param_dict[p1]
     y = param_dict[p2]
     #deltax, deltay = x, y
-    deltax, deltay = 4., 4.
+    deltax, deltay = 3., 4.
 
     if fix_axis_range_to_xxsigma is not None:
         x1, x2 = x - deltax*fix_axis_range_to_xxsigma, x + deltax*fix_axis_range_to_xxsigma
@@ -135,7 +138,10 @@ def show_two_parameter_plot(exparr, F_dic, param_dict, param_names, desired_para
         x1, x2 = x - deltax, x + deltax
         y1, y2 = y - deltay, y + deltay
 
-    ax = subplot(111)
+    if ax_ip is None: 
+        ax = subplot(111)
+    else:
+        ax = ax_ip
     for expcntr, exp in enumerate( exparr ):
         colorarr = color_dic[exp]
         F_mat = F_dic[exp]
@@ -149,7 +155,7 @@ def show_two_parameter_plot(exparr, F_dic, param_dict, param_names, desired_para
         if np.diag(F_mat)[pcntr1] == 0. or  np.diag(F_mat)[pcntr2] == 0.: continue
 
         if ls_dic is not None:
-            lsarr = ls_dic[expcntr]
+            lsarr = ls_dic[exp]
             handlelength = 1.5
         else:
             lsarr = ['-', '-', '-']
@@ -179,17 +185,18 @@ def show_two_parameter_plot(exparr, F_dic, param_dict, param_names, desired_para
             xlim(x1, x2)
             ylim(y1, y2)
 
-            axhline(y, lw = 0.1);axvline(x, lw = 0.1)     
 
         plot([], [], '-', color = colorarr[0], label = r'%s' %(exp))
-        ax.xaxis.set_major_locator(MaxNLocator(nbins=4))
-        ax.yaxis.set_major_locator(MaxNLocator(nbins=4))
+    if (1):#ax_ip is None:
+        axhline(y, lw = 0.25);axvline(x, lw = 0.25)
+    ax.xaxis.set_major_locator(MaxNLocator(nbins=3))
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=4))
 
     if prior_dic is not None:
         for ppp in prior_dic:
             if ppp not in desired_params_to_plot: continue
-            prior_colorval = 'chocolate'
-            prior_alphaval = 0.2
+            prior_colorval = prior_spec_dict['colorval']
+            prior_alphaval = prior_spec_dict['alphaval']
             prior_cov_mat = cov_extract.copy() * 0.
             if ppp == p1:
                 prior_cov_mat[0,0] = prior_dic[ppp]**2.
@@ -212,9 +219,9 @@ def show_two_parameter_plot(exparr, F_dic, param_dict, param_names, desired_para
                 axvspan(10., 10., color = prior_colorval, edgecolor = 'white', alpha = prior_alphaval, zorder = -1000, label = r'%s' %(prior_name))
 
 
-    for label in ax.get_xticklabels(): label.set_fontsize(fsval-3.)
-    for label in ax.get_yticklabels(): label.set_fontsize(fsval-3.)
-    legend(loc = legloc, fontsize = fsval-2, framealpha = 1., ncol = 3)
+    for label in ax.get_xticklabels(): label.set_fontsize(fsval)
+    for label in ax.get_yticklabels(): label.set_fontsize(fsval)
+    if add_legend: legend(loc = legloc, fontsize = fsval-2, framealpha = 1., ncol = 3)
 
     #set axis limits now based on widths obtained
     if fix_axis_range_to_xxsigma is not None:
@@ -235,10 +242,13 @@ def show_two_parameter_plot(exparr, F_dic, param_dict, param_names, desired_para
         x1, x2 = x-widthvalues_for_axis_limits[p1], x+widthvalues_for_axis_limits[p1]
         y1, y2 = y-widthvalues_for_axis_limits[p2], y+widthvalues_for_axis_limits[p2]
     xlim(x1, x2); ylim(y1, y2)
-    p1str = get_latex_param_str(p1)
-    p2str = get_latex_param_str(p2)
-    xlabel(p1str, fontsize = fsval+4);
-    ylabel(p2str, fontsize = fsval+4);
+    if ax_ip is None:
+        p1str = get_latex_param_str(p1)
+        p2str = get_latex_param_str(p2)
+        xlabel(p1str, fontsize = fsval+4);
+        ylabel(p2str, fontsize = fsval+4);
+
+    return ax
 
 
 #def make_triangle_plot(exparr, F_dic, param_dict, tr, tc, param_names, desired_params_to_plot, fix_params, color_dic, ls_dic = None, one_or_two_sigma = 1, fsval = 12, use_percent = False, use_H = False, fix_axis_range_to_xxsigma = 4., lwval = 1.5, upper_or_lower_triangle = 'lower', write_titles = True, show_diagonal = True, legloc = 4):
