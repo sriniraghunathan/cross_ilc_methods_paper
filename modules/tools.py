@@ -4,6 +4,7 @@ from scipy import interpolate as intrp
 import scipy as sc
 from scipy import integrate, stats
 import ilc
+import fisher_tools
 
 
 h, k, c, temp=6.62607e-34, 1.38065e-23, 2.9979e8, 2.725
@@ -253,6 +254,303 @@ def get_radio_ilc_residuals(els, freqarr, wl1, wl2, which_dnds_arr, min_flux_mJy
             radio_cl_dic[which_dnds][spec_index_radio_scatter]['res_ilc'] = res_ilc
 
     return radio_cl_dic
+
+##############
+
+def get_cmb_spectra(els = None, which_spectra = 'lensed', planck_cosmo_version = 2018, quiet = False):
+
+    camb_folder = 'publish/data/CAMB/planck_%s/' %(planck_cosmo_version)
+
+    #CMB stuffs
+    #get fiducual LCDM power spectra computed using CAMB
+    if not quiet:
+        print('get fiducual LCDM power spectra computed using CAMB')
+    camb_fname = '%s/cmb_spectra_%s.txt' %(camb_folder, which_spectra)
+    cl_camb = np.loadtxt(camb_fname)
+    el_camb = cl_camb[:,0] 
+    cl_camb_tt = cl_camb[:,1]
+    dl_fac_camb = el_camb * (el_camb+1)/2/np.pi
+    cl_dic = {}
+    cl_dic['TT'] = cl_camb[:,1]
+    cl_dic['EE'] = cl_camb[:,2]
+    cl_dic['TE'] = cl_camb[:,3]
+
+    if els is None:
+        els = np.copy(el_camb)
+
+    #get derivatives of CMB power spectrum for different LCDM parameters.
+    #They are already computed and stored.
+    if not quiet:
+        print('get/read derivatives')
+    camb_deriv_fname = '%s/cmb_spectra_derivs_%s.npy' %(camb_folder, which_spectra)
+    cl_deriv_dic_tmp = np.load(camb_deriv_fname, allow_pickle = 1).item()
+    cl_deriv_dic = {}
+    param_names = []
+    for p in sorted( cl_deriv_dic_tmp ):
+        if p == 'ell': continue    
+        cl_deriv_dic[p]={}
+        if planck_cosmo_version == 2018:
+            cl_deriv_dic[p]['TT'] = cl_deriv_dic_tmp[p]['TT']
+            cl_deriv_dic[p]['EE'] = cl_deriv_dic_tmp[p]['EE']
+            cl_deriv_dic[p]['TE'] = cl_deriv_dic_tmp[p]['TE']
+        else:
+            cl_deriv_dic[p]['TT'] = cl_deriv_dic_tmp[p][0]
+            cl_deriv_dic[p]['EE'] = cl_deriv_dic_tmp[p][1]
+            cl_deriv_dic[p]['TE'] = cl_deriv_dic_tmp[p][2]
+        
+        if p == 'As' and planck_cosmo_version == 2015:
+            cl_deriv_dic[p]['TT'] *= 1e9
+            cl_deriv_dic[p]['EE'] *= 1e9
+            cl_deriv_dic[p]['TE'] *= 1e9
+            
+        param_names.append( p )
+        
+    #interpolate CAMB spectra / derivatives on the desired els.
+    for which_spec in cl_dic:
+        cl_dic[which_spec] = np.interp(els, el_camb, cl_dic[which_spec], right=0.)
+    for p in sorted( param_names ):
+        for which_spec in cl_deriv_dic[p]:
+            cl_deriv_dic[p][which_spec] = np.interp(els, el_camb, cl_deriv_dic[p][which_spec], right=0.)
+            
+    return cl_dic, cl_deriv_dic
+
+def get_ilc_stuffs(expname, which_fg_model = 'agora'):
+
+    #ILC files
+    fname = 'publish/ilc/ilc_weights_residuals_%s_fg_model.npy' %(which_fg_model)
+    fname_withccatp = 'publish/ilc/ilc_weights_residuals_%s_fg_model_withccatp.npy' %(which_fg_model)
+
+    ilc_dict = np.load(fname, allow_pickle = True).item()
+    ilc_dict_withccatp = np.load(fname_withccatp, allow_pickle = True).item()
+    
+    #total ILC residuals
+    total_ilc_residuals_dict = ilc_dict['total_ilc_residuals']
+    total_ilc_residuals_dict_withccatp = ilc_dict_withccatp['total_ilc_residuals']
+    #print(total_ilc_residuals_dict.keys())
+
+    #get experiment Nl_dict
+    nl_TP_dict = ilc_dict['nl_TP_dict']
+    nl_TP_dict_withccatp = ilc_dict_withccatp['nl_TP_dict']
+
+    #weights
+    weights_dict = ilc_dict['weights']
+    weights_dict_withccatp = ilc_dict_withccatp['weights']
+
+
+    return ilc_dict, ilc_dict_withccatp, total_ilc_residuals_dict, total_ilc_residuals_dict_withccatp, nl_TP_dict, nl_TP_dict_withccatp, weights_dict, weights_dict_withccatp
+
+def get_temperature_ilc_residuals(expname, reqd_ilc_keyname_1, reqd_ilc_keyname_2, quiet = False, which_fg_model = 'agora'): #Temperature ILC residuals for Nl
+
+    ilc_dict, ilc_dict_withccatp, total_ilc_residuals_dict, total_ilc_residuals_dict_withccatp, nl_TP_dict, nl_TP_dict_withccatp, weights_dict, weights_dict_withccatp = get_ilc_stuffs(expname, which_fg_model = which_fg_model)
+
+    if not quiet:
+        print('\tget ILC residuals for Nl')
+    if expname.find('withccatp')>-1:
+        dict_to_use = total_ilc_residuals_dict_withccatp
+        expname_to_use = expname.replace('_withccatp', '')
+    else:
+        dict_to_use = total_ilc_residuals_dict
+        expname_to_use = expname
+    if reqd_ilc_keyname_1 != reqd_ilc_keyname_2:
+        reqd_ilc_keyname_12 = '%sx%s' %(reqd_ilc_keyname_1, reqd_ilc_keyname_2)
+    else:
+        reqd_ilc_keyname_12 = reqd_ilc_keyname_1
+    els, total_ilc_residual_mv = dict_to_use[expname_to_use]['mv']
+    els, total_ilc_residual_1 = dict_to_use[expname_to_use][reqd_ilc_keyname_1]
+    els, total_ilc_residual_2 = dict_to_use[expname_to_use][reqd_ilc_keyname_2]
+    els, total_ilc_residual_12 = dict_to_use[expname_to_use][reqd_ilc_keyname_12]
+    
+    return els, total_ilc_residual_mv, total_ilc_residual_1, total_ilc_residual_2, total_ilc_residual_12    
+
+def get_polarisation_mvilc_residuals(els, expname, which_fg_model = 'agora'):
+    #get MV-ILC for polarisation
+    """
+    Note that foregrounds are assumed to be unpolarised here.
+    So this should simply be a MV noise estimate after taking beams into account.
+    """
+
+    ilc_dict, ilc_dict_withccatp, total_ilc_residuals_dict, total_ilc_residuals_dict_withccatp, nl_TP_dict, nl_TP_dict_withccatp, weights_dict, weights_dict_withccatp = get_ilc_stuffs(expname, which_fg_model = which_fg_model)
+
+    dict_for_ilc = {}
+    if expname.find('withccatp')>-1:
+        expname_to_use = expname.replace('_withccatp', '')
+        dict_for_ilc['EE'] = nl_TP_dict_withccatp[expname_to_use]['P']
+    else:
+        dict_for_ilc['EE'] = nl_TP_dict[expname]['P']
+    bands = get_exp_bands(expname)
+    mvilc_pol_residuals, mvilc_pol_weights = ilc.get_mvilc_residual_and_weights(bands, els, dict_for_ilc)
+    mvilc_pol_residuals = mvilc_pol_residuals[0]
+
+    if (0):#expname == 's4_wide': #show plot for MV-ILC for pol and compare that will noise.
+        clf()
+        fsval = 14
+        band_color_dict = {95: 'navy', 150: 'darkgreen', 220: 'goldenrod', 285: 'orangered', 345: 'darkred', 
+                            '410': 'hotpink', 850: 'black'}
+        ax=subplot(111, yscale = 'log')
+        noise_arr = []
+        for (nu1, nu2) in dict_for_ilc['EE']:
+            if nu1 != nu2: continue
+            curr_nl = dict_for_ilc['EE'][(nu1, nu2)]
+
+            plot(els, curr_nl, color = band_color_dict[nu1], label = r'%s GHz' %(nu1))
+            noise_arr.append(curr_nl)
+
+        #MV-ILC for pol
+        plot(els, mvilc_pol_residuals, color = 'black', label = r'MV-ILC')
+
+        if (0): #simple MV noise for pol as a sanity check.
+            noise_arr = np.asarray(noise_arr)
+            mv_noise_pol = ( np.sum(noise_arr**-2, axis = 0) )**-0.5
+            plot(els, mv_noise_pol, color = 'hotpink', lw = 2., ls = '-.', label = r'MV noise for pol.')
+
+        legend(loc = 1, fontsize = fsval - 6, ncol = 5)
+        xlabel(r'Multipole $\ell$', fontsize = fsval)
+        ylabel(r'Polarisation noise: $C_{\ell}$ [$\mu$K$^{2}$]', fontsize = fsval-2)
+        xlim(0., 7000.); ylim(1e-7, .01)
+        title_str = r'%s: Polarisation noise + MV-ILC' %(exp_specs_dict[expname][0])
+        title(title_str, fontsize = fsval)
+        show()
+        
+    return els, mvilc_pol_residuals
+
+def get_exp_bands(expname):
+    if expname in ['s4_wide', 's4_deep', 'so_baseline', 'so_goal']:        
+        bands = [95, 150, 220, 285]
+    elif expname == 'spt3g':
+        bands = [95, 150, 220]#, 600, 857]
+    elif expname == 'spt4':
+        bands = [95, 150, 220, 285, 345]
+    elif expname in ['s4_wide_withccatp', 'so_baseline_withccatp', 'so_goal_withccatp']: 
+        bands = [95, 150, 220, 285, 345, 410, 850]
+        
+    return bands
+
+def wrapper_get_delta_cl(els, cl_dic, fsky, 
+                            total_ilc_residual_1, total_ilc_residual_2, total_ilc_residual_12, 
+                            total_ilc_residual_mv, mvilc_pol_residuals,
+                           ):    
+    #get delta_Cl using Knox formula.
+    nl11_dic = {}
+    nl11_dic['TT'] = total_ilc_residual_1
+    nl11_dic['EE'] = mvilc_pol_residuals
+    nl11_dic['TE'] = np.copy(total_ilc_residual_1) * 0.
+
+    nl22_dic = {}
+    nl22_dic['TT'] = total_ilc_residual_2
+    nl22_dic['EE'] = mvilc_pol_residuals
+    nl22_dic['TE'] = np.copy(total_ilc_residual_2) * 0.
+
+    nl12_dic = {}
+    nl12_dic['TT'] = total_ilc_residual_12
+    nl12_dic['EE'] = mvilc_pol_residuals
+    nl12_dic['TE'] = np.copy(total_ilc_residual_12) * 0.
+
+    delta_cl_dic = fisher_tools.get_knox_errors_parent(els, cl_dic, nl11_dic, fsky, nl22_dic = nl22_dic, nl12_dic = nl12_dic)
+    #print(delta_cl_dic.keys())
+
+    if (1): #MV ILC
+        nl_mv_dic = {}
+        nl_mv_dic['TT'] = total_ilc_residual_mv
+        nl_mv_dic['EE'] = mvilc_pol_residuals
+        nl_mv_dic['TE'] = np.copy(total_ilc_residual_mv) * 0.
+        delta_cl_dic_mv = fisher_tools.get_knox_errors_parent(els, cl_dic, nl_mv_dic, fsky)
+        #print(delta_cl_dic_mv.keys()) 
+    
+    return delta_cl_dic, delta_cl_dic_mv
+
+#radio stuffs
+def get_radio_residuals(els, expname, reqd_ilc_keyname_1, reqd_ilc_keyname_2, which_dnds = 'lagache', 
+                        min_flux_mJy=0.1e-3, max_flux_mJy = 3e-3, 
+                        spec_index_radio = -0.76, 
+                        spec_index_radio_scatter = 0.2,
+                        quiet = True): 
+
+    ilc_dict, ilc_dict_withccatp, total_ilc_residuals_dict, total_ilc_residuals_dict_withccatp, nl_TP_dict, nl_TP_dict_withccatp, weights_dict, weights_dict_withccatp = get_ilc_stuffs(expname)
+
+    #get radio spectrum now for a given masking threshold.
+    if expname.find('withccatp')>-1:
+        expname_to_use = expname.replace('_withccatp', '')        
+        w1, w2 = weights_dict_withccatp[expname_to_use][reqd_ilc_keyname_1], weights_dict_withccatp[expname_to_use][reqd_ilc_keyname_2] #weights for the two ILC maps.
+    else:
+        expname_to_use = expname
+        w1, w2 = weights_dict[expname_to_use][reqd_ilc_keyname_1], weights_dict[expname_to_use][reqd_ilc_keyname_2] #weights for the two ILC maps.
+    bands = get_exp_bands(expname)
+    ##print(bands, len(bands), w1.shape, w2.shape); sys.exit()
+    radio_cl_dict = get_radio_ilc_residuals(els, bands, w1, w2, [which_dnds], 
+                                                  min_flux_mJy = min_flux_mJy, max_flux_mJy = max_flux_mJy, 
+                                                  spec_index_radio = spec_index_radio, 
+                                                  spec_index_radio_scatter_arr = [spec_index_radio_scatter],
+                                                 quiet = quiet)
+
+    res_cl_radio = radio_cl_dict[which_dnds][spec_index_radio_scatter]['res_ilc']
+    
+    return res_cl_radio
+
+def get_radio_spectrum_and_derivatives(els, expname, cl_dic, cl_deriv_dic, reqd_ilc_keyname_1, reqd_ilc_keyname_2 = None, which_dnds = 'lagache', 
+                        min_flux_mJy=0.1e-3, max_flux_mJy = 3e-3, 
+                        spec_index_radio = -0.76, 
+                        spec_index_radio_scatter = 0.2, 
+                        spec_index_radio_step = 0.002,
+                        spec_index_radio_scatter_step = 0.002,
+                        quiet = True):
+    
+
+    #get radio spectrum
+    if not quiet: print('get radio spectrum')
+    cl_radio = get_radio_residuals(els, expname, reqd_ilc_keyname_1, reqd_ilc_keyname_2, max_flux_mJy = max_flux_mJy, spec_index_radio = spec_index_radio, spec_index_radio_scatter = spec_index_radio_scatter, quiet=quiet)
+    #add radio to cl_dic['TT']
+    ##cl_dic['TT'] += cl_radio## - already included in total residuals.
+
+    #get deriviatives for spec_index_radio
+    if not quiet: print('get deriviatives for alpha_radio')
+    cl_radio_alpha_radio_low = get_radio_residuals(els, expname, reqd_ilc_keyname_1, reqd_ilc_keyname_2, max_flux_mJy = max_flux_mJy, spec_index_radio = spec_index_radio - spec_index_radio_step, spec_index_radio_scatter = spec_index_radio_scatter, quiet=quiet)
+    cl_radio_alpha_radio_high = get_radio_residuals(els, expname, reqd_ilc_keyname_1, reqd_ilc_keyname_2, max_flux_mJy = max_flux_mJy, spec_index_radio = spec_index_radio + spec_index_radio_step, spec_index_radio_scatter = spec_index_radio_scatter, quiet=quiet)
+    cl_deriv_dic['alpha_radio'] = {}
+    cl_deriv_dic['alpha_radio']['TT'] = (cl_radio_alpha_radio_high-cl_radio_alpha_radio_low)/( 2 * spec_index_radio_step)
+    cl_deriv_dic['alpha_radio']['EE'] = cl_deriv_dic['alpha_radio']['TT'] * 0.
+    cl_deriv_dic['alpha_radio']['TE'] = cl_deriv_dic['alpha_radio']['TT'] * 0.
+
+    #get deriviatives for spec_index_radio_scatter
+    if not quiet: print('get deriviatives for alpha_radio_sigma')
+    cl_radio_alpha_radio_sigma_low = get_radio_residuals(els, expname, reqd_ilc_keyname_1, reqd_ilc_keyname_2, max_flux_mJy = max_flux_mJy, 
+                                                         spec_index_radio = spec_index_radio, 
+                                                         spec_index_radio_scatter = spec_index_radio_scatter - spec_index_radio_scatter_step,
+                                                        quiet=quiet)
+    cl_radio_alpha_radio_sigma_high = get_radio_residuals(els, expname, reqd_ilc_keyname_1, reqd_ilc_keyname_2, max_flux_mJy = max_flux_mJy, 
+                                                          spec_index_radio = spec_index_radio, 
+                                                          spec_index_radio_scatter = spec_index_radio_scatter + spec_index_radio_scatter_step,
+                                                         quiet=quiet)
+    cl_deriv_dic['alpha_radio_sigma'] = {}
+    cl_deriv_dic['alpha_radio_sigma']['TT'] = (cl_radio_alpha_radio_sigma_high-cl_radio_alpha_radio_sigma_low)/( 2 * spec_index_radio_scatter_step)
+    cl_deriv_dic['alpha_radio_sigma']['EE'] = cl_deriv_dic['alpha_radio_sigma']['TT'] * 0.
+    cl_deriv_dic['alpha_radio_sigma']['TE'] = cl_deriv_dic['alpha_radio_sigma']['TT'] * 0.
+    
+    return cl_radio, cl_dic, cl_deriv_dic
+
+#CIB+tSZ residuals
+def get_cib_tsz_spectrum_and_derivatives(els, expname, cl_dic, cl_deriv_dic, reqd_ilc_keyname_1, reqd_ilc_keyname_2 = None, Acibtsz = 1., Acibtsz_step = None):
+
+    ilc_dict, ilc_dict_withccatp, total_ilc_residuals_dict, total_ilc_residuals_dict_withccatp, nl_TP_dict, nl_TP_dict_withccatp, weights_dict, weights_dict_withccatp = get_ilc_stuffs(expname)
+    if reqd_ilc_keyname_1 != reqd_ilc_keyname_2:
+        reqd_ilc_keyname_str = '%sx%s' %(reqd_ilc_keyname_1, reqd_ilc_keyname_2)
+    else:
+        reqd_ilc_keyname_str = reqd_ilc_keyname_1
+    cl_cibtsz_ori = ilc_dict['cib_plus_tsz_residuals']['s4_wide'][reqd_ilc_keyname_str]
+    cl_cibtsz = Acibtsz * np.copy( cl_cibtsz_ori )
+    #add CIB+tSZ to cl_dic['TT']
+    ##cl_dic['TT'] += cl_cibtsz## - already included in total residuals.
+    
+    #now get derivatives
+    if Acibtsz_step == None: Acibtsz_step = Acibtsz / 100.
+        
+    cl_cibtsz_low = np.copy( cl_cibtsz_ori ) * ( Acibtsz - Acibtsz_step)
+    cl_cibtsz_high = np.copy( cl_cibtsz_ori ) * ( Acibtsz + Acibtsz_step)
+    cl_deriv_dic['Acibtsz'] = {}
+    cl_deriv_dic['Acibtsz']['TT'] = (cl_cibtsz_high-cl_cibtsz_low)/( 2 * Acibtsz_step)
+    cl_deriv_dic['Acibtsz']['EE'] = cl_deriv_dic['Acibtsz']['TT'] * 0.
+    cl_deriv_dic['Acibtsz']['TE'] = cl_deriv_dic['Acibtsz']['TT'] * 0.
+        
+    return cl_cibtsz, cl_dic, cl_deriv_dic
 
 ##############
 def fn_format_axis(ax,fx,fy):
