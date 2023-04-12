@@ -41,7 +41,7 @@ def get_lensing_xcorr_input(expname, cross_corr_component_keyname, estimator, re
 
     #Input cross-correlation spectrum (Unbiased.)
     fname_unbiased_searchstr = '%s/*_input_%s_%s.dat' %(folderpath, cross_corr_component_keyname, reqd_zbin)
-    ##print(fname_unbiased_searchstr); ##sys.exit()
+    #print(fname_unbiased_searchstr); ##sys.exit()
     fname_unbiased = glob.glob( fname_unbiased_searchstr )[0]
     els_, cl_kx_input = np.loadtxt(fname_unbiased, unpack = True) 
     if els is None:
@@ -169,7 +169,13 @@ def get_clkk_nlkk(els, expname, estimator, lmaxtt = 3000, cl_kk_fname = 'publish
 
     #nl_kk
     expname_str, estimator_str = lensing_estimator_folder_str(expname, estimator, lmaxtt = lmaxtt)
-    nl_kk_fname = '%s/clkk_n0_%silc_%s.dat' %(lensing_n0_folder, estimator_str, expname_str)
+    if estimator_str == 'x_lmaxt5000': estimator_str = 'x'
+    #print(estimator_str); sys.exit()
+    nl_kk_fname = '%s/clkk_n0_%s_%s.dat' %(lensing_n0_folder, estimator_str, expname_str)
+    if estimator_str == 'x':
+        nl_kk_fname = nl_kk_fname.replace('_x_', '_xilc_')
+    elif estimator_str == 'x_lmaxt5000': 
+        nl_kk_fname = nl_kk_fname.replace('.dat', '_lmaxt5000.dat')
     els_, nl_kk = np.loadtxt(nl_kk_fname, unpack = True)
     nl_kk = np.interp(els, els_, nl_kk)
 
