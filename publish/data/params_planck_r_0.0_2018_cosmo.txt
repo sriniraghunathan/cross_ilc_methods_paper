@@ -35,12 +35,20 @@ pivot_scalar = 0.05
 pivot_tensor = 0.05
 
 # CAMB files
-lens_potential_accuracy=0 ##1 #1 - self.set_nonlinear_lensing(True)
+##lens_potential_accuracy=0 ##1 #1 - self.set_nonlinear_lensing(True)
+##min_l_limit=2
+##max_l_limit= 7000 #7000 ##3000 ##5000 ##2502
+##max_l_tensor = 7000
+##max_eta_k = 25000 #50000 ###25000.0
+##max_eta_k_tensor = 7000 #12000 #3000.0
+# CAMB files
+lens_potential_accuracy=1 #1 - self.set_nonlinear_lensing(True)
 min_l_limit=2
-max_l_limit= 7000 #7000 ##3000 ##5000 ##2502
-max_l_tensor = 7000
-max_eta_k = 25000 #50000 ###25000.0
-max_eta_k_tensor = 7000 #12000 #3000.0
+max_l_limit= 7000 ##3000 ##5000 ##2502
+max_l_tensor = 600 ##1500
+max_eta_k = 50000 ###25000.0
+max_eta_k_tensor = 12000 #3000.0
+
  
 
 #experiment

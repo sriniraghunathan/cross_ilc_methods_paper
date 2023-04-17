@@ -250,9 +250,8 @@ def show_two_parameter_plot(ax_ip, exparr, F_dic, param_dict, param_names, desir
 
     return ax
 
-
 #def make_triangle_plot(exparr, F_dic, param_dict, tr, tc, param_names, desired_params_to_plot, fix_params, color_dic, ls_dic = None, one_or_two_sigma = 1, fsval = 12, use_percent = False, use_H = False, fix_axis_range_to_xxsigma = 4., lwval = 1.5, upper_or_lower_triangle = 'lower', write_titles = True, show_diagonal = True, legloc = 4):
-def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to_plot, color_dic, ls_dic = None, one_or_two_sigma = 1, fsval = 12, use_percent = False, use_H = False, fix_axis_range_to_xxsigma = 4., lwval = 1., upper_or_lower_triangle = 'lower', write_titles = True, show_diagonal = True, legloc = 4, prior_dic = {}):
+def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to_plot, color_dic, ls_dic = None, one_or_two_sigma = 1, fsval = 12, use_percent = False, use_H = False, fix_axis_range_to_xxsigma = 4., lwval = 1., upper_or_lower_triangle = 'lower', write_titles = True, show_diagonal = True, legloc = 4, prior_dic = {}, bias_dic = None):
 
     ##print(param_names, desired_params_to_plot); sys.exit()
 
@@ -286,7 +285,7 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
             if upper_or_lower_triangle == 'lower' and sbpl not in np.tril(diag_matrix): continue
             if upper_or_lower_triangle == 'upper' and sbpl not in np.triu(diag_matrix): continue
 
-            print(sbpl, p1, p2)
+            print(sbpl, p1, p2, end = ' ')
             cov_inds_to_extract = [(pcntr1, pcntr1), (pcntr1, pcntr2), (pcntr2, pcntr1), (pcntr2, pcntr2)]
             '''
             x, deltax = param_dict[p1]
@@ -416,12 +415,16 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
                         else:
                             hor, ver = get_Gaussian(x, widthval, x1, x2, epsilon_x)
                         #labval = r'%.4f' %(widthval)
-                        if use_percent:
-                            labval = r'%.2f\%%' %(100. * abs(widthval/x))
+                        if bias_dic is not None:
+                            #labval = r'%g (%.2f$\sigma$)' %(bias_dic[p1][0], bias_dic[p1][1]/widthval)
+                            labval = r'(%.3g$\sigma$)' %(bias_dic[p1][1]/widthval)
                         else:
-                            #labval = r'%.3g' %(widthval)
-                            #labval = r'%.4f' %(widthval)
-                            labval = r'%.4g' %(widthval)
+                            if use_percent:
+                                labval = r'%.2f\%%' %(100. * abs(widthval/x))
+                            else:
+                                #labval = r'%.3g' %(widthval)
+                                #labval = r'%.4f' %(widthval)
+                                labval = r'%.4g' %(widthval)
 
                         if p1 in prior_dic:
                             widthval=prior_dic[p1]
@@ -443,7 +446,9 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
                         legend(loc = legloc, framealpha = 1, fontsize = legfsval-2, edgecolor = 'None', handletextpad=handletextpad, handlelength = handlelength, numpoints = 1, columnspacing = 1, labelspacing = 0.4)#, ncol = 2)#, handlelength = 2.)
 
                         #print(x1, x2, p1)
-                        if p1 =='Aksz': print(exp, p1, widthval, x/widthval)
+                        #if p1 =='Aksz': print(exp, p1, widthval, x/widthval)
+                        if p1 =='Aksz':
+                            x1, x2 = 0.5, 1.5
                         xlim(x1, x2)
                         ylim(0., 1.)
                         setp(ax.get_yticklabels(), visible=False); tick_params(axis='y',left='off')
@@ -479,10 +484,16 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
                         #ellipse.set_alpha(alphaarr[ss])
 
                         #print(x1, x2, p1, p2)
+                        if p1 =='Aksz':
+                            x1, x2 = 0.5, 1.5
+                        elif p2 == 'Aksz':
+                            y1, y2 = 0.5, 1.5
+
                         xlim(x1, x2)
                         ylim(y1, y2)
 
-                        axhline(y, lw = 0.1);axvline(x, lw = 0.1)
+                        if bias_dic is None:
+                            axhline(y, lw = 0.1);axvline(x, lw = 0.1)
 
             if show_diagonal:
                 if legloc == 1: #cmb-hd stuff
@@ -542,6 +553,11 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
                 ##if p1 == p2: print(widthvalues_for_axis_limits[p1], x, x1, x2)
                 ax = subplot(tr, tc, sbpl)#, aspect = 'equal')
                 #print(deltax, deltay, p1, p2)
+                if p1 =='Aksz':
+                    x1, x2 = 0.5, 1.5
+                elif p2 == 'Aksz':
+                    y1, y2 = 0.5, 1.5
+
                 xlim(x1, x2)
                 if p1 != p2:
                     ylim(y1, y2)

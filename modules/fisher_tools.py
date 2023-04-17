@@ -382,37 +382,79 @@ def get_bias_vector(els, F_mat, param_names, delta_cl_dic, cl_deriv_dic, cl_sys_
     
     return final_bias_vector
 
-def simple_fisher_bias_check_introduce_sys_by_changing_cosmo_params(sys_bias_param_name, sys_bias_param_shift, raw_cl = True, sys_bias_spectra_arr_to_be_shifted = ['TT', 'EE', 'TE'], which_spectra = 'lensed_scalar', debug = False):
+def get_cmb_power_spectra_from_camb(param_dict, raw_cl =  True, which_spectra = 'lensed'):
+    which_spectra = '%s_scalar' %(which_spectra)
+    print(which_spectra)
+    import camb
+    pars = camb.CAMBparams(max_l_tensor = param_dict['max_l_tensor'], max_eta_k_tensor = param_dict['max_eta_k_tensor'])
+    pars.set_for_lmax(param_dict['max_l_limit'], lens_potential_accuracy=param_dict['lens_potential_accuracy'])
+    pars.set_accuracy(AccuracyBoost = param_dict['AccuracyBoost'], lAccuracyBoost = param_dict['lAccuracyBoost'], lSampleBoost = param_dict['lSampleBoost'],\
+        DoLateRadTruncation = param_dict['do_late_rad_truncation'])
+    pars.set_cosmology(thetastar=param_dict['thetastar'], ombh2=param_dict['ombh2'], omch2=param_dict['omch2'], nnu = param_dict['neff'], mnu=param_dict['mnu'], \
+        omk=param_dict['omk'], tau=param_dict['tau'], YHe = param_dict['YHe'], Alens = param_dict['Alens'], \
+        num_massive_neutrinos = param_dict['num_nu_massive']) 
+
+    pars.set_for_lmax(int(param_dict['max_l_limit']), lens_potential_accuracy=param_dict['lens_potential_accuracy'],\
+        max_eta_k = param_dict['max_eta_k'],\
+        #lens_k_eta_reference = param_dict['max_eta_k'],\
+        )
+    pars.InitPower.set_params(ns=param_dict['ns'], r=param_dict['r'], As = param_dict['As'])
+
+    results = camb.get_results(pars)
+    powers = results.get_cmb_power_spectra(pars, raw_cl = raw_cl, lmax = param_dict['max_l_limit'])#, spectra = [which_spectra])#, CMB_unit=None, raw_cl=False)
+    if pars.OutputNormalization == 1:
+        powers[which_spectra] = param_dict['T_cmb']**2. *  powers[which_spectra]
+
+    cl_tt, cl_ee, cl_te, cl_bb = powers[which_spectra].T * 1e12
+    els = np.arange( len(cl_tt) )
+
+    if (0):
+        ax  =subplot(111, yscale = 'log')
+        plot(els, cl_tt, color = 'black')
+        xlim(0., 5000.); ylim(1e-8, 1e-2); 
+        show(); sys.exit()
+        sys.exit()
+
+    cl_dic={}
+    cl_dic['TT'], cl_dic['EE'], cl_dic['TE'], cl_dic['BB'] = cl_tt, cl_ee, cl_te, cl_bb
+
+    return els, cl_dic
+
+def simple_fisher_bias_check_introduce_sys_by_changing_cosmo_params(sys_bias_param_name_arr, sys_bias_param_shift_arr, raw_cl = True, sys_bias_spectra_arr_to_be_shifted = ['TT', 'EE', 'TE'], which_spectra = 'lensed', debug = False, fpath = 'publish/data/params_planck_r_0.0_2018_cosmo.txt', tmpels = None, tmpcltt = None):
 
     import tools_for_plotting
-    import camb
-    
+
     parent_cl_dic = {}
     for iter in range(2):
 
-        param_dict = tools_for_plotting.get_ini_param_dict()
+        param_dict = tools_for_plotting.get_ini_param_dict(fpath = fpath)
         if iter == 1:
-            param_dict[sys_bias_param_name] = sys_bias_param_shift
+            for sys_bias_param_name, sys_bias_param_shift in zip(sys_bias_param_name_arr, sys_bias_param_shift_arr):
+                param_dict[sys_bias_param_name] = sys_bias_param_shift
 
-        pars = camb.CAMBparams(max_l_tensor = param_dict['max_l_tensor'], max_eta_k_tensor = param_dict['max_eta_k_tensor'])
-        pars.set_for_lmax(param_dict['max_l_limit'], lens_potential_accuracy=param_dict['lens_potential_accuracy'])
-        pars.set_accuracy(AccuracyBoost = param_dict['AccuracyBoost'], lAccuracyBoost = param_dict['lAccuracyBoost'], lSampleBoost = param_dict['lSampleBoost'],\
-            DoLateRadTruncation = param_dict['do_late_rad_truncation'])
-        pars.set_cosmology(thetastar=param_dict['thetastar'], ombh2=param_dict['ombh2'], omch2=param_dict['omch2'], nnu = param_dict['neff'], mnu=param_dict['mnu'], \
-            omk=param_dict['omk'], tau=param_dict['tau'], YHe = param_dict['YHe'], Alens = param_dict['Alens'], \
-            num_massive_neutrinos = param_dict['num_nu_massive']) 
+        #print(sys_bias_param_name, param_dict[sys_bias_param_name])
+        ##print(param_dict)
+        els, cl_dic = get_cmb_power_spectra_from_camb(param_dict, raw_cl =  raw_cl, which_spectra = which_spectra)
 
-        results = camb.get_results(pars)
-        powers = results.get_cmb_power_spectra(pars, raw_cl = raw_cl, lmax = param_dict['max_l_limit'])#, spectra = [which_spectra])#, CMB_unit=None, raw_cl=False)
-        cl_tt, cl_ee, cl_te, cl_bb = powers[which_spectra].T * 1e12
-        els = np.arange( len(cl_tt) )
-        cl_dic={}
-        cl_dic['TT'], cl_dic['EE'], cl_dic['TE'], cl_dic['BB'] = cl_tt, cl_ee, cl_te, cl_bb
         parent_cl_dic[iter] = cl_dic
+        ##print(cl_dic.keys()); 
+    ##sys.exit()
+        
+    cl_dic_fid = parent_cl_dic[0]
+
+    if (0):
+        els_, cl_dic_fid, cl_dic_mod = els, parent_cl_dic[0], parent_cl_dic[1]
+        ax  =subplot(111, yscale = 'log')
+        plot(tmpels, tmpcltt, color = 'gray')
+        plot(els_, cl_dic_fid['TT'], color = 'black')
+        plot(els_, cl_dic_mod['TT'], color = 'red')
+        plot(els_, cl_dic_fid['TT'] - cl_dic_mod['TT'], color = 'lime')
+        xlim(0., 5000.); ylim(1e-8, 1e-2); 
+        show(); sys.exit()
 
     cl_sys_shift_dic = {}
     for sys_bias_spectra_to_be_shifted in sys_bias_spectra_arr_to_be_shifted:
-        cl_sys_shift = parent_cl_dic[1][sys_bias_spectra_to_be_shifted] - parent_cl_dic[0][sys_bias_spectra_to_be_shifted]
+        cl_sys_shift = parent_cl_dic[0][sys_bias_spectra_to_be_shifted] - parent_cl_dic[1][sys_bias_spectra_to_be_shifted]
         cl_sys_shift_dic[sys_bias_spectra_to_be_shifted] = cl_sys_shift
     if debug:
         color_arr = ['navy', 'red']
@@ -424,4 +466,48 @@ def simple_fisher_bias_check_introduce_sys_by_changing_cosmo_params(sys_bias_par
         plot(els, dl_fac * -cl_sys_shift, color = 'black', ls= '-.')
         show(); sys.exit()
 
-    return els, cl_sys_shift_dic
+    return els, cl_dic_fid, cl_sys_shift_dic
+
+def simple_fisher_bias_check_introduce_sys_by_changing_cosmo_params_single_parameter(sys_bias_param_name, sys_bias_param_shift, raw_cl = True, sys_bias_spectra_arr_to_be_shifted = ['TT', 'EE', 'TE'], which_spectra = 'lensed_scalar', debug = False, fpath = 'publish/data/params_planck_r_0.0_2018_cosmo.txt', tmpels = None, tmpcltt = None):
+
+    import tools_for_plotting
+    
+    parent_cl_dic = {}
+    for iter in range(2):
+
+        param_dict = tools_for_plotting.get_ini_param_dict(fpath = fpath)
+        if iter == 1:
+            param_dict[sys_bias_param_name] = sys_bias_param_shift
+
+        #print(sys_bias_param_name, param_dict[sys_bias_param_name])
+        els, cl_dic = get_cmb_power_spectra_from_camb(param_dict, raw_cl =  raw_cl, which_spectra = which_spectra)
+
+        parent_cl_dic[iter] = cl_dic
+
+    cl_dic_fid = parent_cl_dic[0]
+
+    if (0):
+        els_, cl_dic_fid, cl_dic_mod = els, parent_cl_dic[0], parent_cl_dic[1]
+        ax  =subplot(111, yscale = 'log')
+        plot(tmpels, tmpcltt, color = 'gray')
+        plot(els_, cl_dic_fid['TT'], color = 'black')
+        plot(els_, cl_dic_mod['TT'], color = 'red')
+        plot(els_, cl_dic_fid['TT'] - cl_dic_mod['TT'], color = 'lime')
+        xlim(0., 5000.); ylim(1e-8, 1e-2); 
+        show(); sys.exit()
+
+    cl_sys_shift_dic = {}
+    for sys_bias_spectra_to_be_shifted in sys_bias_spectra_arr_to_be_shifted:
+        cl_sys_shift = parent_cl_dic[0][sys_bias_spectra_to_be_shifted] - parent_cl_dic[1][sys_bias_spectra_to_be_shifted]
+        cl_sys_shift_dic[sys_bias_spectra_to_be_shifted] = cl_sys_shift
+    if debug:
+        color_arr = ['navy', 'red']
+        for iter in range(2):
+            dl_fac = els * (els+1)
+            ax = subplot(111, yscale = 'log')
+            plot(els, dl_fac * parent_cl_dic[iter][sys_bias_spectra_to_be_shifted], color = color_arr[iter])
+        plot(els, dl_fac * cl_sys_shift, color = 'black')
+        plot(els, dl_fac * -cl_sys_shift, color = 'black', ls= '-.')
+        show(); sys.exit()
+
+    return els, cl_dic_fid, cl_sys_shift_dic
