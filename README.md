@@ -30,6 +30,13 @@
     * These are used for [Fisher](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/s1_get_fisher_matrix.ipynb) forecasting.
     * Both [lensed](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/CAMB/planck_2018/cmb_spectra_lensed.txt) and [unlensed](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/CAMB/planck_2018/cmb_spectra_unlensed.txt) versions are available.
     * Fiducial: Lensed spectra.
+* [ILC results](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/ilc):
+
+* [Fisher results](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/fisher):
+
+* [Lensing results](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/lensing):
+   * [Lensing N0](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/lensing/lensing_n0): Results available for standard QE (*qewithcmbmv*), [MH18](https://arxiv.org/abs/1802.08230) (*mh*), and the cross-ILC (\$\texttt{*xilc*}$).
+   * [Lensing cross-correlations](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/lensing/lensing_xls):
  
 
 ## Dependencies:
