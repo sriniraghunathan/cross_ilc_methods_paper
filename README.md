@@ -10,8 +10,15 @@
   
 ## Notebooks:
 * [make_paper_plots.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/make_paper_plots.ipynb): Reproduce plots in the paper.
-* [perform_ksz_fisher.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/perform_ksz_fisher.ipynb): Forecasts total SNR of the kSZ power spectrum for current and future CMB surveys.
-* [get_radio_residuals.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/get_radio_residuals.ipynb): Model power spectrum of radio sources and also get the ILCed radio residuals analytically.
+* Fisher formalism:
+ * [s1_get_fisher_matrix.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/s1_get_fisher_matrix.ipynb): Forecasts total SNR of the kSZ power spectrum and also cosmological / reionisation constraints for current and future CMB surveys.
+ * [s2_analyse_fisher_matrix.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/s2_analyse_fisher_matrix.ipynb): Analyse the results from [s1_get_fisher_matrix.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/s1_get_fisher_matrix.ipynb). This notebook will help in making tables and figures.
+* [get_bandpower_errors.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/get_bandpower_errors.ipynb): Obtain the bandpower errors for different ILC techniques / CMB experiments analytically using Knox formula.
+* [estimate_bias_using_fisher.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/estimate_bias_using_fisher.ipynb): Estimate biases in kSZ and cosmological parameters due to unmodelled CIB/tSZ residuals. This used a modifed Fisher formalism based on [Amara & Refregier 2007](https://arxiv.org/abs/0710.5171).
+ * There are also couple of more example notebooks to understand Fisher-based bias estimation in [fisher_bias](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/b6eef6e608ef574324ce874112d2db7f638efc29/fisher_bias) folder.
+  * [example1_bias_in_line_fitting.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/b6eef6e608ef574324ce874112d2db7f638efc29/fisher_bias/example1_bias_in_line_fitting.ipynb) - Bias estimation in simple line fitting and a comparison of the result using a lileihood approach.
+  * [example2_bias_in_cosmo.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/b6eef6e608ef574324ce874112d2db7f638efc29/fisher_bias/example2_bias_in_cosmo.ipynb) - Inject biases as \$xx\sigma$ of cosmological parameters and recover them using the modified Fisher appraoch. 
+* [get_radio_residuals.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/get_radio_residuals.ipynb): Modelling the power spectrum of radio sources and also get the ILCed radio residuals analytically.
 
 ## [Data products](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/data):
 * [lagache_2019_ns150_radio.dat](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/lagache_2019_ns150_radio.dat): Radio \$dN/dS$ = Lagache et al. 2020 model [(arXiv: 1911.09466)](https://arxiv.org/abs/1911.09466) used to model radio point source power.
