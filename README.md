@@ -17,7 +17,7 @@
 * [estimate_bias_using_fisher.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/estimate_bias_using_fisher.ipynb): Estimate biases in kSZ and cosmological parameters due to unmodelled CIB/tSZ residuals. This used a modifed Fisher formalism based on [Amara & Refregier 2007](https://arxiv.org/abs/0710.5171).
    * There are also couple of more example notebooks to understand Fisher-based bias estimation in [fisher_bias](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/b6eef6e608ef574324ce874112d2db7f638efc29/fisher_bias) folder.
      * [example1_bias_in_line_fitting.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/b6eef6e608ef574324ce874112d2db7f638efc29/fisher_bias/example1_bias_in_line_fitting.ipynb) - Bias estimation in simple line fitting and a comparison of the result using a lileihood approach.
-     * [example2_bias_in_cosmo.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/b6eef6e608ef574324ce874112d2db7f638efc29/fisher_bias/example2_bias_in_cosmo.ipynb) - Inject biases as \$xx\sigma$ of cosmological parameters and recover them using the modified Fisher appraoch. 
+     * [example2_bias_in_cosmo.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/b6eef6e608ef574324ce874112d2db7f638efc29/fisher_bias/example2_bias_in_cosmo.ipynb) - Inject biases as xx\$sigma$ of cosmological parameters and recover them using the modified Fisher appraoch. 
 * [get_radio_residuals.ipynb](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/get_radio_residuals.ipynb): Modelling the power spectrum of radio sources and also get the ILCed radio residuals analytically.
 
 ## Data products:
