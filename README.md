@@ -41,3 +41,5 @@
 
 ## Dependencies:
 * Standard python packages: jupyter notebook, numpy, scipy, matplotlib.
+* For Fisher bias calculations:
+  * CAMB.
