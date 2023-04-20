@@ -33,6 +33,7 @@
 * [ILC results](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/ilc):
 
 * [Fisher results](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/fisher):
+  * [fiducial](publish/fisher/F_mat_lcdm_foregrounds_allkSZ_TTEETE_3mJymask.npy) - Results from TTEETE; 3mJy source mask; Total parameters = 14 parameters: 6 LCDM + 2 radio parameters + 1 CIB/tSZ + 1 kSZ amplitude + 2 homogeneous kSZ + 2 reionisation kSZ.
 
 * [Lensing results](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/lensing):
    * [Lensing N0](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/lensing/lensing_n0): Results available for standard QE, [MH18](https://arxiv.org/abs/1802.08230), and the cross-ILC.
