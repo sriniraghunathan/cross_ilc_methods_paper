@@ -31,6 +31,7 @@
     * Both [lensed](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/CAMB/planck_2018/cmb_spectra_lensed.txt) and [unlensed](https://github.com/sriniraghunathan/cross_ilc_methods_paper/blob/main/publish/data/CAMB/planck_2018/cmb_spectra_unlensed.txt) versions are available.
     * Fiducial: Lensed spectra.
 * [ILC results](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/ilc):
+  * [ilc_weights_residuals_agora_fg_model.npy](publish/ilc/ilc_weights_residuals_agora_fg_model.npy) - ILC residuals and weights for AGORA foreground model.
 
 * [Fisher results](https://github.com/sriniraghunathan/cross_ilc_methods_paper/tree/main/publish/fisher):
   * [fiducial](publish/fisher/F_mat_lcdm_foregrounds_allkSZ_TTEETE_3mJymask.npy) - Results from TTEETE; 3mJy source mask; Total parameters = 14: 6 LCDM + 2 radio parameters + 1 CIB/tSZ + 1 kSZ amplitude + 2 homogeneous kSZ + 2 reionisation kSZ.
