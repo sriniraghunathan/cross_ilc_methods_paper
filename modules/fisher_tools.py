@@ -40,6 +40,11 @@ def get_knox_errors_parent(els, cl_dic, nl11_dic, fsky, nl22_dic = None, nl12_di
             if nl22_dic is not None:
                 nl22 = np.copy(nl11) * 0.
                 nl12 = np.copy(nl11) * 0.
+        elif XX == 'PP':
+            nl11 = np.copy(nl11_dic['PP'])
+            if nl22_dic is not None:
+                nl22 = np.copy(nl11) * 0.
+                nl12 = np.copy(nl11) * 0.
 
         cl11 = cl_dic[XX] + nl11
         if nl22_dic is not None:
