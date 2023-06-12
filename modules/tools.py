@@ -416,7 +416,8 @@ def get_polarisation_mvilc_residuals(els, expname, which_fg_model = 'agora'):
 def get_exp_bands(expname):
     if expname in ['s4_wide', 's4_deep', 'so_baseline', 'so_goal']:        
         bands = [95, 150, 220, 285]
-    elif expname == 'spt3g':
+    #elif expname == 'spt3g':
+    elif expname.lower() in ['spt3g', 'sptsummer', 'sptext6k']:
         bands = [95, 150, 220]#, 600, 857]
     elif expname == 'spt4':
         bands = [95, 150, 220, 285, 345]
