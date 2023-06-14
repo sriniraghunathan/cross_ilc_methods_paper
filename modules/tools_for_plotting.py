@@ -112,7 +112,7 @@ def get_sbpl_locs_dic(param_names_to_plot, cosmo_param_pl_chars_dict, offset = 0
 
     return sbpl_locs_dic
 
-def show_two_parameter_plot(ax_ip, exparr, F_dic, param_dict, param_names, desired_params_to_plot, color_dic, ls_dic = None, one_or_two_sigma = 1, fsval = 12, fix_axis_range_to_xxsigma = 4., lwval = 1.5, legloc = 2, prior_dic = {}, prior_name = None, prior_spec_dict = None, add_legend = False):
+def show_two_parameter_plot(ax_ip, exparr, F_dic, param_dict, param_names, desired_params_to_plot, color_dic, ls_dic = None, one_or_two_sigma = 1, fsval = 12, fix_axis_range_to_xxsigma = 4., lwval = 1.5, legloc = 2, prior_dic = {}, prior_name = None, prior_spec_dict = None, add_legend = False, fill_ellipse = True, alphaval = 0.5):
 
     if prior_spec_dict is None:
         prior_spec_dict = {}
@@ -129,7 +129,7 @@ def show_two_parameter_plot(ax_ip, exparr, F_dic, param_dict, param_names, desir
     x = param_dict[p1]
     y = param_dict[p2]
     #deltax, deltay = x, y
-    deltax, deltay = 3., 4.
+    deltax, deltay = 5., 6.
 
     if fix_axis_range_to_xxsigma is not None:
         x1, x2 = x - deltax*fix_axis_range_to_xxsigma, x + deltax*fix_axis_range_to_xxsigma
@@ -142,61 +142,69 @@ def show_two_parameter_plot(ax_ip, exparr, F_dic, param_dict, param_names, desir
         ax = subplot(111)
     else:
         ax = ax_ip
-    for expcntr, exp in enumerate( exparr ):
-        colorarr = color_dic[exp]
-        F_mat = F_dic[exp]
-        exp_COV = fisher_tools.get_fisher_inv(F_mat)
-        cov_extract = []
-        for ii in cov_inds_to_extract:
-            cov_extract.append(exp_COV[ii])
-        cov_extract = np.asarray( cov_extract ).reshape((2,2))
+    if exparr is not None:
+        for expcntr, exp in enumerate( exparr ):
+            colorarr = color_dic[exp]
+            F_mat = F_dic[exp]
+            exp_COV = fisher_tools.get_fisher_inv(F_mat)
+            cov_extract = []
+            for ii in cov_inds_to_extract:
+                cov_extract.append(exp_COV[ii])
+            cov_extract = np.asarray( cov_extract ).reshape((2,2))
 
-        #if np.sum(cov_extract)<=1e-10: continue
-        if np.diag(F_mat)[pcntr1] == 0. or  np.diag(F_mat)[pcntr2] == 0.: continue
+            #if np.sum(cov_extract)<=1e-10: continue
+            if np.diag(F_mat)[pcntr1] == 0. or  np.diag(F_mat)[pcntr2] == 0.: continue
 
-        if ls_dic is not None:
-            lsarr = ls_dic[exp]
-            handlelength = 1.5
-        else:
-            lsarr = ['-', '-', '-']
-            handlelength = 1.5
-        alphaarr = [1., 0.5, 0.25]
+            if ls_dic is not None:
+                lsarr = ls_dic[exp]
+                handlelength = 1.5
+            else:
+                lsarr = ['-', '-', '-']
+                handlelength = 1.5
+            alphaarr = [1., 0.5, 0.25]
 
-        if len(colorarr) == 1:
-            colorarr = np.tile(colorarr[0], len(alphaarr))
+            if len(colorarr) == 1:
+                colorarr = np.tile(colorarr[0], len(alphaarr))
 
-        for ss in range(one_or_two_sigma):
-                                
-            Ep = get_ellipse_specs(cov_extract, howmanysigma = ss + 1)
-            widthval, heightval = Ep[0], Ep[1]
-            if np.isnan(widthval) or np.isnan(heightval): continue
-            ellipse = patches.Ellipse(xy=[x,y], width=2.*widthval, height=2.*heightval, angle=np.degrees(Ep[2]))
+            for ss in range(one_or_two_sigma):
+                                    
+                Ep = get_ellipse_specs(cov_extract, howmanysigma = ss + 1)
+                widthval, heightval = Ep[0], Ep[1]
+                if np.isnan(widthval) or np.isnan(heightval): continue
+                ellipse = patches.Ellipse(xy=[x,y], width=2.*widthval, height=2.*heightval, angle=np.degrees(Ep[2]))
+                ###print(widthval, heightval)
 
-            ax.add_artist(ellipse)
-            ellipse.set_clip_box(ax.bbox)
-            ellipse.set_facecolor('None')#colorarr[ss])
-            #ellipse.set_facecolor(colorarr[ss]); ellipse.set_alpha(0.8)
-            ellipse.set_edgecolor(colorarr[ss])
-            ellipse.set_linewidth(lwval)
-            ellipse.set_linestyle(lsarr[ss])
-            #ellipse.set_alpha(alphaarr[ss])
+                ax.add_artist(ellipse)
+                ellipse.set_clip_box(ax.bbox)
+                if fill_ellipse:
+                    ellipse.set_facecolor(colorarr[ss])#; ellipse.set_edgecolor(colorval)
+                    ellipse.set_alpha(alphaval)
+                else:
+                    ellipse.set_facecolor('None')#colorarr[ss])
+                    #ellipse.set_facecolor(colorarr[ss]); ellipse.set_alpha(0.8)
+                    ellipse.set_edgecolor(colorarr[ss])
+                ellipse.set_linewidth(lwval)
+                ellipse.set_linestyle(lsarr[ss])
+                #ellipse.set_alpha(alphaarr[ss])
 
-            #print(x1, x2, p1, p2)
-            xlim(x1, x2)
-            ylim(y1, y2)
+                #print(x1, x2, p1, p2)
+                xlim(x1, x2)
+                ylim(y1, y2)
 
-
-        plot([], [], '-', color = colorarr[0], label = r'%s' %(exp))
-    if (1):#ax_ip is None:
-        axhline(y, lw = 0.25);axvline(x, lw = 0.25)
-    ax.xaxis.set_major_locator(MaxNLocator(nbins=3))
-    ax.yaxis.set_major_locator(MaxNLocator(nbins=4))
+            if add_legend:
+                plot([], [], '-', color = colorarr[0], label = r'%s' %(exp))
+        if (1):#ax_ip is None:
+            axhline(y, lw = 0.25);axvline(x, lw = 0.25)
+        ax.xaxis.set_major_locator(MaxNLocator(nbins=3))
+        ax.yaxis.set_major_locator(MaxNLocator(nbins=4))
 
     if prior_dic is not None:
+        cov_extract = np.zeros((2,2))
         for ppp in prior_dic:
             if ppp not in desired_params_to_plot: continue
             prior_colorval = prior_spec_dict['colorval']
             prior_alphaval = prior_spec_dict['alphaval']
+            prior_lsval = prior_spec_dict['lsval']
             prior_cov_mat = cov_extract.copy() * 0.
             if ppp == p1:
                 prior_cov_mat[0,0] = prior_dic[ppp]**2.
@@ -210,14 +218,19 @@ def show_two_parameter_plot(ax_ip, exparr, F_dic, param_dict, param_names, desir
             ellipse = patches.Ellipse(xy=[x,y], width=2.*widthval, height=2.*heightval, angle=np.degrees(Ep[2]))
             ax.add_artist(ellipse)
             ellipse.set_clip_box(ax.bbox)
-            ellipse.set_facecolor(prior_colorval)#; ellipse.set_edgecolor(colorval)
-            #ellipse.set_linewidth(lwval)
-            #ellipse.set_linestyle(lsval)
-            ellipse.set_alpha(prior_alphaval)
+            if fill_ellipse:
+                ellipse.set_facecolor(prior_colorval)#; ellipse.set_edgecolor(colorval)
+                ellipse.set_alpha(prior_alphaval)
+            else:
+                ellipse.set_facecolor('None'); ellipse.set_edgecolor(prior_colorval)
+            ellipse.set_linewidth(lwval)
+            ellipse.set_linestyle(prior_lsval)
             ellipse.set_zorder(-1000.)
             if prior_name is not None:
-                axvspan(10., 10., color = prior_colorval, edgecolor = 'white', alpha = prior_alphaval, zorder = -1000, label = r'%s' %(prior_name))
-
+                if fill_ellipse:
+                    axvspan(10., 10., color = prior_colorval, edgecolor = 'white', alpha = prior_alphaval, zorder = -1000, label = r'%s' %(prior_name))
+                else:
+                    plot([], [], color = prior_colorval, lw = lwval, alpha = prior_alphaval, zorder = -1000, label = r'%s' %(prior_name))
 
     for label in ax.get_xticklabels(): label.set_fontsize(fsval)
     for label in ax.get_yticklabels(): label.set_fontsize(fsval)
@@ -293,7 +306,7 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
             '''
             x = param_dict[p1]
             y = param_dict[p2]
-            deltax, deltay = 5*x, 5*y
+            deltax, deltay = 30*x, 30*y
 
             #deltax, deltay = x/10., y/10. #rough plotting limits
             epsilon_x, epsilon_y = abs(x/10000.), abs(y/10000.) #for Gaussian 1d curve.
@@ -424,7 +437,7 @@ def make_triangle_plot(exparr, F_dic, param_dict, param_names, desired_params_to
                             else:
                                 #labval = r'%.3g' %(widthval)
                                 #labval = r'%.4f' %(widthval)
-                                labval = r'%.4g' %(widthval)
+                                labval = r'%.3g' %(widthval)
 
                         if p1 in prior_dic:
                             widthval=prior_dic[p1]
