@@ -1,7 +1,7 @@
 # Cross-ILC methods paper
 
 ## Paper:
-* Raghunathan & Omori 2023; arXiv:[2304.09166](https://arxiv.org/abs/2304.09166); Submitted to ApJ.
+* Raghunathan & Omori 2023; arXiv:[2304.09166](https://arxiv.org/abs/2304.09166); Accepted for publication in ApJ.
 
 ## Overview:
 * Cross-ILC technique:
