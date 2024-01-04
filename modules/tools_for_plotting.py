@@ -12,7 +12,7 @@ def get_latex_param_str(param, use_H = False):
     'sigma_logYszM': r'$\sigma_{_{\rm logY}}$', 'alpha_sigma_logYszM': r'$\alpha_{\sigma}$', 'gamma_sigma_logYszM': r'$\gamma_{\sigma}$', \
     'alpha': r'$\eta_{\rm v}$', 'sigma_8': r'$\sigma_{\rm 8}$', \
     'one_minus_hse_bias': r'$1-b_{\rm HSE}$', 'omega_m': r'$\Omega_{\rm m}$', 'thetastar': r'$\theta_{\ast}$',\
-    'h0':r'$h$', 'm_nu':r'$\sum m_{\nu}$ [eV]', 'ombh2': r'$\Omega_{b}h^{2}$', 'omch2': r'$\Omega_{c}h^{2}$', 'w0': r'$w_{0}$', 'wa': r'$w_{a}$', \
+    'h':r'$h$', 'h0':r'$h$', 'm_nu':r'$\sum m_{\nu}$ [eV]', 'ombh2': r'$\Omega_{b}h^{2}$', 'omch2': r'$\Omega_{c}h^{2}$', 'w0': r'$w_{0}$', 'wa': r'$w_{a}$', \
     'tau': r'$\tau_{\rm re}$', 'As': r'$A_{\rm s}$', 'ns': r'$n_{\rm s}$', 'neff': r'N$_{\rm eff}$', \
     'rho_snr_mlens': r'$\rho_{\rm SNR-lens}$', \
     'slope_vir': r'$A_{\rm v}$', 'intercept_vir': r'$B_{\rm v}$', \
@@ -176,7 +176,7 @@ def show_two_parameter_plot(ax_ip, exparr, F_dic, param_dict, param_names, desir
 
                 ax.add_artist(ellipse)
                 ellipse.set_clip_box(ax.bbox)
-                if fill_ellipse:
+                if (0):##fill_ellipse:
                     ellipse.set_facecolor(colorarr[ss])#; ellipse.set_edgecolor(colorval)
                     ellipse.set_alpha(alphaval)
                 else:
